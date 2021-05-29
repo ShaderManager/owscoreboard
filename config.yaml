@@ -1,0 +1,13 @@
+port: 8080
+
+keymaps:
+  increment-tank-wins: "numpad 7"
+  increment-tank-ties: "numpad 8"
+  increment-tank-losses: "numpad 9"
+  increment-dps-wins: "numpad 4"
+  increment-dps-ties: "numpad 5"
+  increment-dps-losses: "numpad 6"
+  increment-sup-wins: "numpad 1"
+  increment-sup-ties: "numpad 2"
+  increment-sup-losses: "numpad 3"
+  reset-stats: "numpad 0"
