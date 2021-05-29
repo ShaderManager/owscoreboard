@@ -1,6 +1,4 @@
-import { h, render, Component } from "https://unpkg.com/preact@latest?module";
-// In case you need hooks uncomment this line
-// import {} from "https://unpkg.com/preact@latest/hooks/dist/hooks.module.js?module";
+import { h, render, Component } from "https://unpkg.com/preact?module";
 import htm from "https://unpkg.com/htm?module";
 
 // Initialize htm with Preact
