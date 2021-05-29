@@ -1,21 +1,15 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"html/template"
 	"log"
-	"mime"
-	"net/http"
-	"net/url"
 	"os"
 
-	hook "github.com/robotn/gohook"
 	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	Port int `yaml:"port"`
+	Port          int    `yaml:"port"`
+	TwitchChannel string `yaml:"twitch-channel"`
 
 	Keymaps struct {
 		IncTankWins   string `yaml:"increment-tank-wins"`
@@ -35,6 +29,7 @@ func NewConfig() Config {
 	res := Config{}
 	res.Port = 8080
 
+	// Initialize default values
 	res.Keymaps.IncTankWins = "numpad 7"
 	res.Keymaps.IncTankTies = "numpad 8"
 	res.Keymaps.IncTankLosses = "numpad 9"
@@ -78,105 +73,8 @@ func init() {
 func main() {
 	cfg, _ = loadConfig("config.yaml")
 
-	go setupHook()
+	go startTwitchPolling()
+	go setupKeyboardHook()
 
-	// Workaround for Windows
-	mime.AddExtensionType(".js", "text/javascript")
-
-	mux := http.NewServeMux()
-	fs := http.FileServer(http.Dir("./static"))
-
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
-	mux.HandleFunc("/", indexHandler)
-	mux.HandleFunc("/getResults", getResultsHandler)
-
-	log.Printf("Starting web server at http://localhost:%d/", cfg.Port)
-	http.ListenAndServe(":"+fmt.Sprintf("%d", cfg.Port), mux)
-}
-
-var tpl = template.Must(template.ParseFiles("index.html"))
-
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	tpl.Execute(w, nil)
-}
-
-type Results struct {
-	Wins   int `json:"wins"`
-	Losses int `json:"losses"`
-	Ties   int `json:"ties"`
-}
-
-var tankResults = &Results{0, 0, 0}
-var dpsResults = &Results{0, 0, 0}
-var supResults = &Results{0, 0, 0}
-
-func getResultsHandler(w http.ResponseWriter, r *http.Request) {
-	u, err := url.Parse(r.URL.String())
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	params := u.Query()
-	class := params.Get("class")
-
-	var res *Results
-
-	switch {
-	case class == "tank":
-		res = tankResults
-	case class == "dps":
-		res = dpsResults
-	case class == "sup":
-		res = supResults
-	default:
-		http.Error(w, "Invalid class", http.StatusInternalServerError)
-		return
-	}
-
-	data, _ := json.Marshal(res)
-	w.Write(data)
-}
-
-func setupHook() {
-	defer hook.End()
-
-	hook.Register(hook.KeyDown, []string{""}, func(e hook.Event) {
-		increment := func() int {
-			if (e.Mask & 2) != 0 {
-				return -1
-			} else {
-				return 1
-			}
-		}()
-
-		switch e.Rawcode {
-		case hook.KeychartoRawcode(cfg.Keymaps.IncSupWins):
-			supResults.Wins += increment
-		case hook.KeychartoRawcode(cfg.Keymaps.IncSupTies):
-			supResults.Ties += increment
-		case hook.KeychartoRawcode(cfg.Keymaps.IncSupLosses):
-			supResults.Losses += increment
-		case hook.KeychartoRawcode(cfg.Keymaps.IncDpsWins):
-			dpsResults.Wins += increment
-		case hook.KeychartoRawcode(cfg.Keymaps.IncDpsTies):
-			dpsResults.Ties += increment
-		case hook.KeychartoRawcode(cfg.Keymaps.IncDpsLosses):
-			dpsResults.Losses += increment
-		case hook.KeychartoRawcode(cfg.Keymaps.IncTankWins):
-			tankResults.Wins += increment
-		case hook.KeychartoRawcode(cfg.Keymaps.IncTankTies):
-			tankResults.Ties += increment
-		case hook.KeychartoRawcode(cfg.Keymaps.IncTankLosses):
-			tankResults.Losses += increment
-		case hook.KeychartoRawcode(cfg.Keymaps.ResetStats):
-			tankResults = &Results{0, 0, 0}
-			dpsResults = &Results{0, 0, 0}
-			supResults = &Results{0, 0, 0}
-		}
-	})
-
-	s := hook.Start()
-	<-hook.Process(s)
+	startWebServer()
 }
