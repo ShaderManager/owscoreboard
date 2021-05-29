@@ -21,7 +21,7 @@ func startWebServer() {
 
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 	mux.HandleFunc("/", indexHandler)
-	mux.HandleFunc("/getResults", getResultsHandler)
+	mux.HandleFunc("/scoretable", getScoretableHandler)
 
 	log.Printf("Starting web server at http://localhost:%d/", cfg.Port)
 	http.ListenAndServe(":"+fmt.Sprintf("%d", cfg.Port), mux)
@@ -31,7 +31,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	tpl.Execute(w, nil)
 }
 
-func getResultsHandler(w http.ResponseWriter, r *http.Request) {
+func getScoretableHandler(w http.ResponseWriter, r *http.Request) {
 	u, err := url.Parse(r.URL.String())
 
 	if err != nil {
@@ -40,19 +40,19 @@ func getResultsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := u.Query()
-	class := params.Get("class")
+	role := params.Get("role")
 
 	var res *Scoretable
 
 	switch {
-	case class == "tank":
-		res = tankScoretable
-	case class == "dps":
-		res = dpsScoretable
-	case class == "sup":
-		res = supScoretable
+	case role == "tank":
+		res = table.Tank
+	case role == "dps":
+		res = table.Dps
+	case role == "sup":
+		res = table.Support
 	default:
-		http.Error(w, "Invalid class", http.StatusInternalServerError)
+		http.Error(w, "Invalid role", http.StatusInternalServerError)
 		return
 	}
 

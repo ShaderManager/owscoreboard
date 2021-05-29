@@ -55,6 +55,9 @@ func startTwitchPolling() {
 
 	client.OnPrivateMessage(func(msg twitch.PrivateMessage) {
 		if isModeratorOrStreamer(msg.User.Badges) {
+			// arg 0: command
+			// arg 1 [optional]: role
+			// arg 2 [optional]: increment value
 			args := splitArgs(msg.Message)
 
 			cmd := ""

@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"gopkg.in/yaml.v2"
 )
@@ -73,8 +75,15 @@ func init() {
 func main() {
 	cfg, _ = loadConfig("config.yaml")
 
+	loadTable("table.json")
+	defer saveTable("table.json")
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	go startTwitchPolling()
 	go setupKeyboardHook()
+	go startWebServer()
 
-	startWebServer()
+	<-done
 }

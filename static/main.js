@@ -9,13 +9,13 @@ const html = htm.bind(h);
 class WLTRow extends Component {
     constructor(props) {
         super(props);        
-        this.state = { type: props.type, W: 0, L: 0, T: 0};
-        console.log(props.type)
+        this.state = { role: props.role, W: 0, L: 0, T: 0};
+        console.log(props.role)
     }
 
     componentDidMount() {
         this.timer = setInterval(() => {
-            fetch("/getResults?class=" + this.state.type)
+            fetch("/scoretable?role=" + this.state.role)
                 .then(resp => resp.json())
                 .then((data) => {
                     this.setState({
@@ -31,10 +31,10 @@ class WLTRow extends Component {
         clearInterval(this.timer);
     }
 
-    render({type}) {
+    render() {
         return html`
         <tr class="result-row">
-            <td class="result-score"><img class="image-role" src="static/${type}.png" /></td>
+            <td class="result-score"><img class="image-role" src="static/${this.state.role}.png" /></td>
             <td class="result-score result-score-W">${this.state.W}</td>
             <td class="result-score">-</td>
             <td class="result-score result-score-T">${this.state.T}</td>
@@ -56,9 +56,9 @@ render(
       <th class="result-header">-</th>
       <th class="result-header result-header-L">L</th>
     </tr>
-    <${WLTRow} type="tank" />
-    <${WLTRow} type="dps" />
-    <${WLTRow} type="sup" />
+    <${WLTRow} role="tank" />
+    <${WLTRow} role="dps" />
+    <${WLTRow} role="sup" />
   </table>
   `,
   document.querySelector("#root")
