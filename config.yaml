@@ -1,4 +1,5 @@
 port: 8080
+twitch-channel: "yourchannel"
 
 keymaps:
   increment-tank-wins: "numpad 7"
